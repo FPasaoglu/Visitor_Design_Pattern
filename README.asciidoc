@@ -1,0 +1,369 @@
+# Visitor Design Pattern
+
+Behaovioral Tasarım grubuna ait olan bu desen anlaşılması ve uygulanabilirliği açısından kolay olduğu için kullanım sıklığının yazılımlarda %20 olduğu Dofactory.com tarafından belirtilmiştir.
+
+NOTE: Amaç : Yapılacak olan yeni bir işlem için yeni bir nesne oluşturmamak veya üst sınıflar üzerinde bir değişikliğe gidilmemek. Böylece kodu anlaşılabilir, esnek ve değişime açık bir hale getirmek.
+
+Şöyle düşünelim birden çok eviniz var ve her evinize yeni bir balkon inşaa edeceksiniz. Her eviniz için ayrı ayrı uğraşmak istemiyorsunuz. Ah bir hayırsever olsa ona evlerime balkon inşaa et desem ve o tek başına her evime balkon eklese..
+Ne güzel olurdu değil mi ? . Gerçek hayatta böyle bir hayırsever bulmak zor . Ama bizim yazacağımız kod üzerinde o hayıserver bizim Visitor 'ımız oluyor.
+Yeri geldiğinde o hayırseverden farklı farklı isteklerde bulunabiliyoruz.
+
+WARNING: Visitor Design Pattern , Open-Closed Prensibinin bir örneğidir.
+**Gelişime açık , Değiştirmeye kapalı**
+
+
+
+## Desen Yapısı
+
+image::structure.png[]
+
+
+## Örnek
+
+Şimdi kendi örneğimizle tasarımı pekiştirelim.Aşağıdaki UML diyagramını inceleyip kod aşamasına geçebiliriz.
+
+[uml,file="visitor.png"]
+----
+
+interface Browser {
+    +loadExtension(Extension ext):void
+    +getServerAdress():String
+    +getHistory():List<String>
+    +getPassword(String adress):String
+}
+
+class Chrome {
+
+    - String color;
+    - String googleServer;
+    - String searchAlgorithm;
+    - List<String> history;
+    - Map<String,String> passwords;
+
+    +Chrome()
+    +getColor():String
+    +setColor(String color):void 
+    + setGoogleServer(String googleServer):void
+    +getSearchAlgorithm():String 
+    -setSearchAlgorithm(String searchAlgorithm):void
+    +setHistory(List<String> history):void
+    +getPassword(String adress):String
+    +setPasswords(Map<String, String> passwords):void
+}
+
+class Firefox {
+
+    - String color;
+    - String firefoxServer;
+    - String searchAlgorithm;
+    - List<String> history;
+    - Map<String,String> passwords;
+
+    +Firefox()
+    +getColor():String
+    -setColor(String color):void 
+    + setFirefoxServer(String firefoxServer):void
+    +getSearchAlgorithm():String 
+    -setSearchAlgorithm(String searchAlgorithm):void
+    +setHistory(List<String> history):void
+    +getPassword(String adress):String
+    +setPasswords(Map<String, String> passwords):void
+}
+
+class Explorer {
+
+    - String color;
+    - String explorerServer;
+    - String searchAlgorithm;
+    - List<String> history;
+    - Map<String,String> passwords;
+
+    +Explorer()
+    +getColor():String
+    +setColor(String color):void 
+    - setExplorerServer(String explorerServer):void
+    +getSearchAlgorithm():String 
+    -setSearchAlgorithm(String searchAlgorithm):void
+    -setHistory(List<String> history):void
+    +getPassword(String adress):String
+    +setPasswords(Map<String, String> passwords):void
+}
+
+interface Extension {
+    + visit(Chrome chrome):void
+    + visit(Firefox firefox):void
+    + visit(Explorer explorer):void
+}
+
+class DarkTheme{
+
+}
+
+class CleanHistory {
+    +ArrayList<String> cleanHistory ;
+    +CleanHistory()
+}
+
+class SavePassword{
+
+    +Map<String, String> password;
+
+    +SavePassword(String site, String password)
+}
+
+class Ubuntu {
+
++{static} main(String args[]) : void  
+}
+
+
+Browser <|.. Chrome : <<implements>>
+Browser <|.. Firefox : <<implements>>
+Browser <|.. Explorer : <<implements>>
+
+Extension <|.. DarkTheme
+Extension <|.. SavePassword
+Extension <|.. CleanHistory
+
+Ubuntu ..|> Browser
+Ubuntu .|> Extension
+----
+
+Şimdi şöyle bir olay hayal edelim. Bir adet Ubuntu işletim sistemli bilgisayarımız olsun .
+
+Bu bilgisayarımıza belirli tarayıcılar yükleyebiliyoruz. 
+[source,]
+----
+<1>
+Browser chrome = new Chrome();
+Browser firefox = new Firefox();
+Browser explorer = new Explorer();
+----
+<1> Tarayıcıları Ubuntuya kurma işlemi
+
+Bu tarayıcıları yükledikten sonra bu tarayıcılara yeni yeni modüller ekleyeceğimizi düşünelim.
+
+Tarayıcılar için modülleri kabul eden bir fonksiyonumuz mevcuttur.
+
+Browser içerisinde bulunan 
+
+[source,]
+----
+ <1>
+ @Override
+public void loadExtension(Extension ext) {
+    ext.visit(this);
+    }
+----
+<1> kodu ile browser'ları ek paket yüklenebilir hale getiriyoruz.Alınan extension pakedi (this) ile bulunduğu nesneyi döndürür.
+
+Extension içerisinde bulunan 
+[source,]
+----
+<1>
+void visit(Chrome chrome);
+void visit(Firefox firefox);
+void visit(Explorer explorer);
+----
+<1> kod ile extensionlar üzerinde bir **OVERLOAD** işlemi gerçekleşir.
+Chrome sınıfından gelen void visit(Chrome chrome) methodunda işlem görür.
+
+
+Örneğin tarayıcı renklerini değiştireceğimizi düşünelim. 
+
+[source,]
+----
+
+public class Chrome implements Browser
+<1>
+    private String color;
+<2>
+    private String googleServer;
+<3>
+    private String searchAlgorithm;
+<4>
+    private List<String> history;
+<5>
+    private Map<String,String> passwords;
+
+    Chrome(){
+        color = "white";
+        googleServer = "8.8.8.8";
+        searchAlgorithm = "PageRank";
+        history = new ArrayList<>();
+        passwords = new HashMap<>();
+    }
+<6>
+    @Override
+    public void loadExtension(Extension ext) {
+        ext.visit(this);
+    }
+
+
+    public String getColor() {
+        return color;
+    }
+
+    public void setColor(String color) {
+        this.color = color;
+    }
+----
+<1> Browser arayüz rengi
+<2> Browser Server adres
+<3> Arama algoritması
+<4> Arama geçmişi
+<5> Kayıtlı şifreler
+<6> Yeni işleme olanak sağlayan loadExtension fonksiyonu
+
+NOTE: 6 numaralı fonksiyon sayesinde Tarayıcı üzerinde herhangi bir işlem yapmamıza gerek kalmıyor. Tarayıcıyı değiştirmiyoruz. Visit fonksiyonu ile geliştiriyoruz.
+
+
+[source,]
+----
+public class DarkTheme implements Extension{
+<1>
+    @Override
+    public void visit(Chrome chrome) {
+        System.out.print("Chrome color has updated " + chrome.getColor());
+        chrome.setColor("dark");
+        System.out.println(" to " + chrome.getColor());
+    }
+<2>
+    @Override
+    public void visit(Firefox firefox) {
+        System.out.println("Firefox " + firefox.getSearchAlgorithm() + " doesn't support changing color");
+    }
+<3>
+    @Override
+    public void visit(Explorer explorer) {
+        System.out.print("Explorer color has updated " + explorer.getColor());
+        explorer.setColor("dark");
+        System.out.println(" to " + explorer.getColor());
+
+    }
+}
+----
+<1> Eklenti yükleme loadExtension ile Chrome sınıfından gelirse yapılacak işlem
+<2> Firefox üzerinde yapılacak işlem
+<3> Explorer üzerinde yapılacak işlem
+
+
+Diğer eklenti sınıfları
+[source,]
+----
+
+public class SavePassword implements Extension{
+
+    Map<String, String> password;
+<1>
+    SavePassword(String site, String password){
+        this.password = new HashMap<>();
+        this.password.put(site,password);
+    }
+
+<2>
+    @Override
+    public void visit(Chrome chrome) {
+        chrome.setPasswords(password);
+        System.out.println("Password successfully added to Chrome ");
+    }
+
+    @Override
+    public void visit(Firefox firefox) {
+        firefox.setPasswords(password);
+        System.out.println("Password successfully added to Firefox");
+    }
+
+    @Override
+    public void visit(Explorer explorer) {
+        explorer.setPasswords(password);
+        System.out.println("Password successfully added to Explorer");
+    }
+}
+----
+<1> Dolu constructor ile site bilgisi ve şifre aldık.
+<2> Aynı şekilde visit fonksiyonunun override edilmesi ile tarayıcı üzerinde işlem yapıyoruz.
+
+[source,]
+----
+
+public class CleanHistory implements Extension {
+
+    ArrayList<String> cleanHistory ;
+<1>
+    CleanHistory(){
+        cleanHistory = new ArrayList<>();
+        cleanHistory.clear();
+    }
+<2>
+    @Override
+    public void visit(Chrome chrome) {
+        chrome.setHistory(cleanHistory);
+        System.out.println("Chrome's history cleaned succesfully");
+    }
+
+    @Override
+    public void visit(Firefox firefox) {
+        firefox.setHistory(cleanHistory);
+        System.out.println("Firefox's history cleaned succesfully");
+    }
+
+    @Override
+    public void visit(Explorer explorer) {
+        System.out.println("Explorer " + explorer.getSearchAlgorithm() + " doesn't support clean your history");
+    }
+}
+----
+<1> Yeni bir liste oluşturuyor ve içini boşaltıyoruz.
+
+<2> visit fonksiyonları ile tarayıcıların History listesine yeni boş listeyi atıyoruz.Böylece geçmiş temizleme işlemi yapmış olduk.
+
+WARNING: Visitor Design Pattern bir diğer avantajı eklentinin uyumlu olup olamayacağını belirleyebiliyor oluşumuz. DarkTheme sınıfı 2. maddede firefox tarayıcısının renk değiştirmeyi desteklemediği görülmektedir.
+
+
+Şimdi Ubuntu bilgisayarımızda nasıl kullandığımıza bir göz atalım.
+
+[source,]
+----
+class Ubuntu {
+
+    public static void main(String args[]){
+<1>
+        Browser chrome = new Chrome();
+        Browser firefox = new Firefox();
+        Browser explorer = new Explorer();
+<2>
+        Extension darkTheme = new DarkTheme();
+        Extension savePassword = new SavePassword("e-destek.kocaeli.edu.tr" , "Abc123");
+        Extension cleanHistory = new CleanHistory();
+
+<3>
+        chrome.loadExtension(darkTheme);
+        firefox.loadExtension(darkTheme);
+        explorer.loadExtension(darkTheme);
+
+
+        System.out.println("----------------------------------");
+<4>
+        chrome.loadExtension(savePassword);
+        System.out.println("Password : " + chrome.getPassword("e-destek.kocaeli.edu.tr"));
+        System.out.println("----------------------------------");
+
+<5>
+        firefox.loadExtension(cleanHistory);
+        explorer.loadExtension(cleanHistory);
+
+    }
+
+}
+----
+<1> Polymorphisim ile tarayıcılarımızdan yeni obje oluşturuyoruz.
+<2> Polymorphisim ile eklentilerimizden yeni obje oluşturuyoruz. SavePassword için site ve şifre aldığımızı gözden kaçırmayın
+<3> Tarayıcılar için yeni bir eklenti ekliyoruz.Arayüz rengini değiştirecektir.
+<4> 2.adımda alınan SavePassword eklentisine alınan site bilgisi ve şifresi , Chrome tarayıcısına eklendi.
+<5> Firefox ve Explorer geçmişi sildik.
+
+### OUTPUT
+image::output.png[]
+
+
